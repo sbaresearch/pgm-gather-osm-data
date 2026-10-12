@@ -16,7 +16,7 @@ def get_raw_subs(date: str):
             continue
 
         query = f"""
-            [out:json][date:"{date}"][timeout:300];
+            [out:json][date:"{date}"][timeout:500];
             area["ISO3166-1"="AT"]->.searchArea;
             (
             {filter}(area.searchArea);

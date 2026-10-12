@@ -9,14 +9,16 @@ from util.utils import confirm_data_fetch
 def get_raw_gens(date: str):
     overpass_url = "https://overpass-api.de/api/interpreter"
 
-    features = {"generator_ways": 'way["power"="plant"]', "generator_relations": 'rel["power"="plant"]'}
+    features = {  # "generator_ways": 'way["power"="plant"]',
+        "generator_relations": 'rel["power"="plant"]'
+    }
 
     for name, filter in features.items():
         if not confirm_data_fetch(f"osm_data/{name}_{date}.json", name):
             continue
 
         query = f"""
-            [out:json][date:"{date}"][timeout:300];
+            [out:json][date:"{date}"][timeout:500];
             area["ISO3166-1"="AT"]->.searchArea;
             (
             {filter}(area.searchArea);

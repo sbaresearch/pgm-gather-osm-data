@@ -14,7 +14,7 @@ def get_raw_lines(date: str):
     overpass_url = "https://overpass-api.de/api/interpreter"
 
     query = f"""
-        [out:json][date:"{date}"][timeout:300];
+        [out:json][date:"{date}"][timeout:500];
         area["ISO3166-1"="AT"]->.searchArea;
         (
         way["power"~"line|cable"](area.searchArea);
