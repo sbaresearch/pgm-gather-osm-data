@@ -1,0 +1,5 @@
+.nvim-dap-args.lua
+.nvim-dap-last-args
+.venv/*
+__pycache__
+results/*
