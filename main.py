@@ -37,6 +37,11 @@ if __name__ == "__main__":
 
     config.verbose = args.verbose
 
+    from os import makedirs, path
+
+    if not path.isdir("osm_data"):
+        makedirs("osm_data")
+
     # Translate date to correct format
     date = "" if args.date == "NAN" else args.date
     if date:
