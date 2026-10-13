@@ -48,7 +48,7 @@ def clean_gens(date: str) -> gpd.GeoDataFrame:
     # Handle relations
     vprint("\tProcessing relation generators")
 
-    with open("osm_data/generator_relations.json") as f:
+    with open(f"osm_data/generator_relations_{date}.json") as f:
         rel_data = json.load(f)
 
     rel_df = pd.DataFrame(rel_data["elements"])
