@@ -42,6 +42,9 @@ if __name__ == "__main__":
     if not path.isdir("osm_data"):
         makedirs("osm_data")
 
+    if not path.isdir("results"):
+        makedirs("results")
+
     # Translate date to correct format
     date = "" if args.date == "NAN" else args.date
     if date:
@@ -77,6 +80,9 @@ if __name__ == "__main__":
     gens_gdf.to_file("results/generators.gpkg", driver="GPKG")
 
     if args.visualization:
+        if not path.isdir("results/visualisation"):
+            makedirs("results/visualisation")
+
         from visualization import *
 
         vprint("Adding color to line, substation, and generator data")
