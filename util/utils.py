@@ -61,7 +61,7 @@ def confirm_data_fetch(file_path: str, name: str):
 
 
 def vprint(string: str):
-    if config.verbose:
+    if config.VERBOSE:
         tqdm.write(string)
 
 

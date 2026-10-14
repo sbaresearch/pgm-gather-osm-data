@@ -1,1 +1,2 @@
-verbose = False
+VERBOSE = False
+RESULTS_DIR: str
