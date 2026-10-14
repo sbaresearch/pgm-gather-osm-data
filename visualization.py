@@ -4,6 +4,18 @@ import geopandas as gpd
 from shapely.affinity import translate
 
 
+def add_visualization(
+    line_gdf: gpd.GeoDataFrame, sub_gdf: gpd.GeoDataFrame, gens_gdf: gpd.GeoDataFrame
+) -> tuple[gpd.GeoDataFrame, gpd.GeoDataFrame, gpd.GeoDataFrame]:
+    line_gdf = add_line_color(line_gdf)
+    line_gdf = shift_lines(line_gdf)
+    sub_gdf = add_sub_color(sub_gdf)
+    gens_gdf = add_gen_color(gens_gdf)
+    gens_gdf = change_gen_unit(gens_gdf)
+
+    return line_gdf, sub_gdf, gens_gdf
+
+
 def add_line_color(line_gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     line_gdf = line_gdf.copy()
 

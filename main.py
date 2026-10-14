@@ -1,13 +1,25 @@
-import json
 from datetime import datetime
 
-from osm_cleaner.clean_gens import clean_gens
-from osm_cleaner.clean_lines import clean_lines
-from osm_cleaner.clean_subs import clean_subs
-from osm_loader.generator_fetcher import get_raw_gens
-from osm_loader.line_fetcher import get_raw_lines
-from osm_loader.substation_fetcher import get_raw_subs
-from util.utils import vprint
+from gather_data import gather_data
+from util import config
+
+
+def create_results_dir(name: str | None):
+    from os import makedirs, path
+
+    if not path.isdir("results"):
+        makedirs("results")
+
+    config.RESULTS_DIR = f"results/{name}"
+
+    if path.exists(config.RESULTS_DIR):
+        raise NameError("Stated path for result directory already exists")
+
+    makedirs(config.RESULTS_DIR)
+
+    if config.VISUALIZATION:  # only create dir if any maps/graphs will be created
+        makedirs(config.RESULTS_DIR + "/visualisation")
+
 
 if __name__ == "__main__":
     import argparse
@@ -35,15 +47,14 @@ if __name__ == "__main__":
 
     from util import config
 
-    config.verbose = args.verbose
+    config.VERBOSE = args.verbose
+    config.VISUALIZATION = args.visualization
+    config.FETCH_NEW = args.fetch_new
 
     from os import makedirs, path
 
     if not path.isdir("osm_data"):
         makedirs("osm_data")
-
-    if not path.isdir("results"):
-        makedirs("results")
 
     # Translate date to correct format
     date = "" if args.date == "NAN" else args.date
@@ -51,47 +62,9 @@ if __name__ == "__main__":
         d = datetime.fromisoformat(date)
         date = f"{d.year:04d}-{d.month:02d}-{d.day:02d}T{d.hour:02d}:{d.minute:02d}:{d.second:02d}Z"
 
-    if args.fetch_new:
-        vprint("Gathering line data from OSM")
-        get_raw_lines(date)
-        vprint("Gathering generator data from OSM")
-        get_raw_gens(date)
-        vprint("Gathering substation data from OSM")
-        get_raw_subs(date)
+    export_name = f"osm_data_{datetime.now()}"  # noqa: DTZ005
+    if date:
+        export_name = f"{export_name}_attic_{date}"
+    create_results_dir(export_name)
 
-    vprint("Cleaning generator data")
-    gens_gdf = clean_gens(date)
-
-    vprint("Cleaning substation data")
-    sub_gdf = clean_subs(date)
-
-    vprint("Cleaning line data")
-    line_gdf, sub_gdf = clean_lines(sub_gdf, date)
-
-    vprint("Exporting data to results")
-    line_gdf.to_file("results/lines.gpkg", driver="GPKG")
-
-    # ensure correct dtypes for sub fields
-    sub_gdf["lat"], sub_gdf["lon"] = sub_gdf.lat.astype(float), sub_gdf.lon.astype(float)
-    sub_gdf["voltage"] = sub_gdf["voltage"].apply(lambda lst: [int(x) for x in lst])
-    sub_gdf["voltage"] = sub_gdf["voltage"].apply(json.dumps)
-    sub_gdf.to_file("results/substations.gpkg", driver="GPKG")
-
-    gens_gdf.to_file("results/generators.gpkg", driver="GPKG")
-
-    if args.visualization:
-        if not path.isdir("results/visualisation"):
-            makedirs("results/visualisation")
-
-        from visualization import *
-
-        vprint("Adding color to line, substation, and generator data")
-        line_gdf = add_line_color(line_gdf)
-        line_gdf = shift_lines(line_gdf)
-        sub_gdf = add_sub_color(sub_gdf)
-        gens_gdf = add_gen_color(gens_gdf)
-        gens_gdf = change_gen_unit(gens_gdf)
-
-        line_gdf.to_file("results/visualisation/lines.geojson", driver="GeoJSON")
-        sub_gdf.to_file("results/visualisation/substations.geojson", driver="GeoJSON")
-        gens_gdf.to_file("results/visualisation/generators.geojson", driver="GeoJSON")
+    gather_data(date)
