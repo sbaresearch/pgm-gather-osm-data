@@ -21,7 +21,7 @@ def clean_subs(date: str) -> gpd.GeoDataFrame:
     gdf = gpd.GeoDataFrame(pd.concat([subs_way, subs_rel]), geometry="polygon", crs=crs).reset_index(drop=True)
 
     vprint("\tMerging substations intersecting each other")
-    gdf = _merge_touching_substation(gdf)
+    gdf = _merge_touching_substation(gdf)  # pyright: ignore[reportArgumentType]
 
     return gdf
 
@@ -105,7 +105,7 @@ def _filter_low_voltage_subs(df: pd.DataFrame) -> pd.DataFrame:
     # Remove low voltage levels from voltage list and then remove subs that no longer have any voltage levels listed
     # NOTE: keeps substations that do not have any listed voltage level (with voltage=None)
     subs_to_keep = df.voltage.apply(lambda x: bool(len(x)) if x is not None else True)
-    df = df[subs_to_keep]
+    df = df[subs_to_keep]  # pyright: ignore[reportAssignmentType]
     df["voltage"] = df.voltage.apply(_clamp_voltage)
 
     return df
@@ -118,7 +118,7 @@ def _remove_oebb_subs(df: pd.DataFrame) -> pd.DataFrame:
 
     # Remove substations operated by ÖBB
     öbb_subs = df.operator.fillna("").str.lower().str.contains("öbb")
-    return df[~öbb_subs]
+    return df[~öbb_subs]  # pyright: ignore[reportReturnType]
 
 
 def _get_voltage(tags: dict) -> list[int] | None:
@@ -207,7 +207,7 @@ def _merge_touching_substation(subs: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     new_rows = pd.DataFrame(columns=subs.columns)
     for geom in intersecting_subs.polygon_merged.unique():
         subs_to_merge = subs[subs.polygon_merged == geom]
-        new_rows = pd.concat([new_rows, _merge_subs(subs_to_merge)], ignore_index=True)
+        new_rows = pd.concat([new_rows, _merge_subs(subs_to_merge)], ignore_index=True)  # pyright: ignore[reportArgumentType]
 
         subs.drop(index=subs_to_merge.index, inplace=True)
 
