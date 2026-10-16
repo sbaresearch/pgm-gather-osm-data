@@ -83,7 +83,7 @@ def clean_lines(
     df["wires"] = df.wires.replace({"singles": "single"})
 
     vprint("\tCreating line geometry")
-    df = _create_lines_geometry(df)
+    df = _create_lines_geometry(df)  # pyright: ignore[reportArgumentType]
 
     df.drop(columns=["bounds", "tags", "nodes", "type"], inplace=True)
 
