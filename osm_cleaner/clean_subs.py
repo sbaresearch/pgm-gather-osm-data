@@ -18,7 +18,7 @@ def clean_subs(date: str) -> gpd.GeoDataFrame:
     subs_way = _get_way_subs(date)
     subs_rel = _get_rel_subs(date)
 
-    gdf = gpd.GeoDataFrame(pd.concat([subs_way, subs_rel]), geometry="polygon", crs=crs).reset_index()
+    gdf = gpd.GeoDataFrame(pd.concat([subs_way, subs_rel]), geometry="polygon", crs=crs).reset_index(drop=True)
 
     vprint("\tMerging substations intersecting each other")
     gdf = _merge_touching_substation(gdf)
