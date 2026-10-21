@@ -1,7 +1,7 @@
 # Get OSM data
 Gather data from OSM and create CSV files with the relevant data. Based on the method described in [*Modelling the high-voltage grid using open data for Europe and beyond*](https://www.nature.com/articles/s41597-025-04550-7) by B. Xiong at TU Berlin.
 
-This (along with [Nurzu Load Flow Model](https://gitlab.sba-research.org/eris/nurzu-load-flow-model) and [Nurzu Load Flow Simulation](https://gitlab.sba-research.org/eris/nurzu-load-flow-simulation)) is part of a refactored and modularized successor to the now deprecated [nurzu-load-flow-analysis](https://gitlab.sba-research.org/johanna/nurzu-load-flow-analysis) repository.
+This (along with [pgm-model-builder](https://github.com/sbaresearch/pgm-model-builder) and [pgm-simulation](https://github.com/sbaresearch/pgm-simulation)) were originally created as part of the Nurzu! project.
 
 ## Overview
 * Gathers substations, generators, and high and extra-high voltage power lines (110, 220, 380kV) from OSM.
@@ -64,11 +64,8 @@ For the lines, they are cleaned up by fixing geometries and poor values. However
 
 ## Related Projects
 
-* **[Nurzu Load Flow Model](https://gitlab.sba-research.org/eris/nurzu-load-flow-model)**\
+* **[pgm-model-builder](https://github.com/sbaresearch/pgm-model-builder)**\
   Build a model of the Austrian power grid using this OSM data.
 
-* **[Nurzu Load Flow Simulation](https://gitlab.sba-research.org/eris/nurzu-load-flow-simulation)**\
-  Simulates power flow using the model produced by *Nurzu Load Flow Model*.
-
-* **Deprecated:**\
-  [Nurzu Load Flow Analysis](https://gitlab.sba-research.org/johanna/nurzu-load-flow-analysis) (*Nurzu Load Flow Model* and *Nurzu Load Flow Simulation* replace it)
+* **[pgm-simulation](https://github.com/sbaresearch/pgm-simulation)**\
+  Simulates power flow using the model produced by *pgm-model-builder*.
