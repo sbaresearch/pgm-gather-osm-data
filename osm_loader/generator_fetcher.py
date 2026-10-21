@@ -24,7 +24,7 @@ def get_raw_gens(date: str):
             out body geom;
         """
 
-        headers = {"User-Agent": "nurzu_get_powergrid_model"}
+        headers = {"User-Agent": "pgm_get_powergrid_model"}
 
         response = requests.post(overpass_url, data=query, headers=headers)
         response.raise_for_status()  # Raise HTTPError for bad responses
