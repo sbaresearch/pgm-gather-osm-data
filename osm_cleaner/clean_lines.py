@@ -23,11 +23,8 @@ def clean_lines(
         sub (GeoDataFrame): A GeoDataFrame with all relevant information for the subs. Gets updated based on the line,
         with things such as virtual substations.
     """
-    with open(f"osm_data/lines_{date}.json") as f:
-        data = json.load(f)
-
     try:
-        with open(f"osm_data/lines_{date}.json") as f:
+        with open(f"osm_data/lines_{date}.json", "r") as f:
             data = json.load(f)
     except FileNotFoundError:
         answer = ""
@@ -41,7 +38,7 @@ def clean_lines(
 
         get_raw_lines(date)
 
-        with open(f"osm_data/lines_{date}.json") as f:
+        with open(f"osm_data/lines_{date}.json", "r") as f:
             data = json.load(f)
 
     df = pd.DataFrame(data["elements"])
