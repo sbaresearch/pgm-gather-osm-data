@@ -113,7 +113,7 @@ def clean_lines(
 
     vprint("\tSplitting lines that go over virtual substations")
     virtual_subs = sub_gdf[sub_gdf["type"] == "virtual_substation"].copy()
-    gdf = _split_lines_over_subs(gdf, virtual_subs, remove_endpoints=False)
+    gdf = _split_lines_over_subs(gdf, virtual_subs, remove_endpoints=False)  # pyright: ignore[reportArgumentType]
 
     vprint("\tMerging virtual buses within a set radius of real substations")
     gdf, sub_gdf = _merge_virtual_buses_with_substations(gdf, sub_gdf)
@@ -127,7 +127,7 @@ def clean_lines(
         connected_lines = gdf[(gdf.substation_1 == sub_id) | (gdf.substation_2 == sub_id)]
         return not connected_lines.empty
 
-    sub_gdf = sub_gdf[sub_gdf.id.apply(has_connected_lines)]
+    sub_gdf = sub_gdf[sub_gdf.id.apply(has_connected_lines)]  # pyright: ignore[reportAssignmentType]
 
     vprint("\tRemoving lines connecting the same substation")
     gdf, sub_gdf = _remove_shorting_lines(gdf, sub_gdf)
@@ -203,7 +203,7 @@ def _create_lines_geometry(df_lines: pd.DataFrame) -> pd.DataFrame:
     df_lines.loc[:, "geometry"] = df_lines.apply(_create_linestring, axis=1)
 
     bool_circle = df_lines["geometry"].apply(lambda x: x.coords[0] == x.coords[-1])
-    df_lines = df_lines[~bool_circle]
+    df_lines = df_lines[~bool_circle]  # pyright: ignore[reportAssignmentType]
 
     return df_lines
 
@@ -239,9 +239,9 @@ def _remove_lines_within_substations(lines: gpd.GeoDataFrame, subs: gpd.GeoDataF
     -------
     GeoDataFrame (GeoDataFrame): A new GeoDataFrame without lines within substation polygons.
     """
-    lines_in_subs = gpd.sjoin(lines[["id", "geometry"]], subs, how="inner", predicate="within")["id_left"]
+    lines_in_subs = gpd.sjoin(lines[["id", "geometry"]], subs, how="inner", predicate="within")["id_left"]  # pyright: ignore[reportArgumentType]
 
-    lines = lines[~lines["id"].isin(lines_in_subs)]
+    lines = lines[~lines["id"].isin(lines_in_subs)]  # pyright: ignore[reportAssignmentType]
 
     return lines
 
@@ -314,7 +314,7 @@ def _split_lines_into_systems(lines: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # Match voltage, ref, and wires length
     # Lines now has as many voltage, ref, and wires values, excpet in some cases, where:
     # len_ref>1 and len_voltage>1, but len_ref!=len_voltage (or wires instead of voltage)
-    lines = lines.assign(
+    lines = lines.assign(  # pyright: ignore[reportAssignmentType]
         voltage=lines.voltage.where(len_voltage > 1, lines.voltage * n),
         wires=lines.wires.where(len_wires > 1, lines.wires * n),
         ref=lines.ref.where(len_ref > 1, lines.ref * n),
@@ -508,7 +508,7 @@ def _endpoints_not_in_sub(line_geom: LineString, subs: gpd.GeoDataFrame, tol: fl
     def endpoint_close_to_sub(polygon_geom):
         return any(polygon_geom.distance(endpoint) < tol for endpoint in endpoints)
 
-    return subs[~subs.geometry.apply(endpoint_close_to_sub)]
+    return subs[~subs.geometry.apply(endpoint_close_to_sub)]  # pyright: ignore[reportReturnType]
 
 
 def _split_line_on_points(line, point: Point, sub_id: int | None = None) -> list:
@@ -582,7 +582,7 @@ def _get_endpoint_sub(line, subs: gpd.GeoDataFrame, endpoint_index: int, pbar=No
 
     assert isinstance(endpoint, Point)
 
-    subs = subs[subs.geometry.contains(endpoint)]
+    subs = subs[subs.geometry.contains(endpoint)]  # pyright: ignore[reportAssignmentType]
 
     # NOTE: the end point might be in multiple substations, in which case I just take a random one
 
@@ -611,7 +611,7 @@ def _remove_shorting_lines(
     """Removes lines that connect the same substation. Then removes virtual substations that are now not connected with any lines"""
     # Remove lines that connect the same substation
     same_sub_connectors = lines[lines.substation_1 == lines.substation_2]
-    lines = lines.drop(same_sub_connectors.index).reset_index(drop=True)
+    lines = lines.drop(same_sub_connectors.index).reset_index(drop=True)  # pyright: ignore[reportAssignmentType]
 
     # Find and remove virtual subs with no connected lines
     virtual_subs = subs[subs["type"] == "virtual_substation"]
@@ -622,7 +622,7 @@ def _remove_shorting_lines(
     is_isolated = ~virtual_subs.apply(has_connected_lines, axis=1)
     isolated_vsubs = virtual_subs[is_isolated]
 
-    subs = subs.drop(isolated_vsubs.index).reset_index(drop=True)
+    subs = subs.drop(isolated_vsubs.index).reset_index(drop=True)  # type: ignore
 
     return lines, subs
 
@@ -663,7 +663,7 @@ def _add_virtual_buses(lines: gpd.GeoDataFrame, subs: gpd.GeoDataFrame) -> tuple
     endpoint_gdfs = []
     for endpoint in range(1, 3):
         missing_sub = lines[pd.isna(lines[f"substation_{endpoint}"])]
-        endpoints = missing_sub[["id", "voltage", "geometry"]].copy().rename(columns={"id": "line_id"})
+        endpoints = missing_sub[["id", "voltage", "geometry"]].copy().rename(columns={"id": "line_id"})  # type: ignore
         endpoints["line_id"] = f"{endpoint}_" + endpoints.line_id.astype(str)
         endpoints["geometry"] = endpoints["geometry"].apply(lambda x, endpoint=endpoint: x.boundary.geoms[endpoint - 1])
         endpoint_gdfs.append(endpoints)
@@ -690,7 +690,7 @@ def _add_virtual_buses(lines: gpd.GeoDataFrame, subs: gpd.GeoDataFrame) -> tuple
     for vsub in virtual_subs.itertuples():
         for id in vsub.line_id:  # type: ignore
             endpoint, line_id = int(id[0]), id[2:]
-            lines.loc[lines.id == line_id, f"substation_{endpoint}"] = vsub.id
+            lines.loc[lines.id == line_id, f"substation_{endpoint}"] = vsub.id  # pyright: ignore[reportAttributeAccessIssue]
     virtual_subs.drop(columns="line_id", inplace=True)
 
     # Add known substation data
@@ -762,19 +762,19 @@ def _merge_virtual_buses_with_substations(
             sub_center = sub.polygon.centroid.coords[0]
 
             # Extend lines to the center of the substation
-            lines_starting_here = lines[lines.substation_1 == vsub.id]
+            lines_starting_here = lines[lines.substation_1 == vsub.id]  # pyright: ignore[reportAttributeAccessIssue]
             lines.loc[lines_starting_here.index, "geometry"] = lines_starting_here.geometry.apply(
                 lambda ls, sub_center=sub_center: LineString([sub_center, *ls.coords[:]])
             )  # type: ignore
             lines.loc[lines_starting_here.index, "substation_1"] = sub.id
 
-            lines_ending_here = lines[lines.substation_2 == vsub.id]
+            lines_ending_here = lines[lines.substation_2 == vsub.id]  # pyright: ignore[reportAttributeAccessIssue]
             lines.loc[lines_ending_here.index, "geometry"] = lines_ending_here.geometry.apply(
                 lambda ls, sub_center=sub_center: LineString([*ls.coords[:], sub_center])
             )  # type: ignore
             lines.loc[lines_ending_here.index, "substation_2"] = sub.id
 
-            vsub_to_remove.append(vsub.Index)
+            vsub_to_remove.append(vsub.Index)  # pyright: ignore[reportAttributeAccessIssue]
 
     # Remove merged virtual buses.
     virtual_subs.drop(index=vsub_to_remove, inplace=True)
@@ -877,7 +877,7 @@ def _merge_broken_lines(lines: gpd.GeoDataFrame, subs: gpd.GeoDataFrame) -> tupl
     vsubs_to_remove = []
     for vsub in virtual_subs.itertuples():
         # Check if there are exactly two lines connected
-        connected_lines = lines[(lines.substation_1 == vsub.id) | (lines.substation_2 == vsub.id)]
+        connected_lines = lines[(lines.substation_1 == vsub.id) | (lines.substation_2 == vsub.id)]  # pyright: ignore[reportAttributeAccessIssue]
         if len(connected_lines) != 2:
             continue
 
@@ -892,19 +892,20 @@ def _merge_broken_lines(lines: gpd.GeoDataFrame, subs: gpd.GeoDataFrame) -> tupl
             continue
 
         other_sub = connected_lines.apply(
-            lambda l, vsub_id=vsub.id: l["substation_1"] if l["substation_1"] != vsub_id else l["substation_2"], axis=1
+            lambda l, vsub_id=vsub.id: l["substation_1"] if l["substation_1"] != vsub_id else l["substation_2"],  # pyright: ignore[reportAttributeAccessIssue]
+            axis=1,
         )
         if len(other_sub.unique()) == 1:  # type: ignore
             # Do not remove sub if both lines connect the same substations
             continue
 
         # Get new, merged line.
-        merged_line = _merge_lines(connected_lines)
+        merged_line = _merge_lines(connected_lines)  # pyright: ignore[reportArgumentType]
         lines.drop(index=connected_lines.index, inplace=True)
 
         lines = gpd.GeoDataFrame(pd.concat([lines, merged_line], ignore_index=True), crs=crs, geometry="geometry")
 
-        vsubs_to_remove.append(vsub.Index)
+        vsubs_to_remove.append(vsub.Index)  # pyright: ignore[reportAttributeAccessIssue]
 
     subs.drop(index=vsubs_to_remove, inplace=True)
 
@@ -991,9 +992,9 @@ def _remove_final_step_virtual_buses(
         for vsub in virtual_subs.itertuples(index=False):
             pbar.update(1)
             # Get connected lines
-            connected_lines = lines[(lines.substation_1 == vsub.id) | (lines.substation_2 == vsub.id)].copy()
+            connected_lines = lines[(lines.substation_1 == vsub.id) | (lines.substation_2 == vsub.id)].copy()  # pyright: ignore[reportAttributeAccessIssue]
             connected_lines["other_sub"] = connected_lines.apply(
-                lambda l, vsub_id=vsub.id: l["substation_1"] if l["substation_1"] != vsub_id else l["substation_2"],
+                lambda l, vsub_id=vsub.id: l["substation_1"] if l["substation_1"] != vsub_id else l["substation_2"],  # pyright: ignore[reportAttributeAccessIssue]
                 axis=1,
             )
             counts = connected_lines.other_sub.value_counts()
@@ -1005,17 +1006,19 @@ def _remove_final_step_virtual_buses(
             sub_to_merge_to = counts.index[0]
             lines_to_remove = connected_lines[connected_lines.other_sub == sub_to_merge_to]
 
-            if not (lines_to_remove.geometry.apply(lambda l: len(l.coords)) == 2).all():
+            if not (lines_to_remove.geometry.apply(lambda l: len(l.coords)) == 2).all():  # pyright: ignore[reportAttributeAccessIssue]
                 # Only remove virtual bus if the lines to remove are exactly one segment long
                 continue
 
-            vsubs_to_remove.append(vsub.Index)
+            vsubs_to_remove.append(vsub.Index)  # pyright: ignore[reportAttributeAccessIssue]
 
-            lines.drop(index=lines_to_remove.index, inplace=True)
+            lines.drop(index=lines_to_remove.index, inplace=True)  # pyright: ignore[reportAttributeAccessIssue]
 
             # Update substation value on the remaining line
-            line_to_move = connected_lines[connected_lines.other_sub != sub_to_merge_to].iloc[0]  # always exactly one
-            sub_number = "substation_1" if line_to_move.substation_1 == vsub.id else "substation_2"
+            line_to_move = connected_lines[connected_lines.other_sub != sub_to_merge_to].iloc[  # pyright: ignore[reportAttributeAccessIssue]
+                0
+            ]  # always exactly one
+            sub_number = "substation_1" if line_to_move.substation_1 == vsub.id else "substation_2"  # pyright: ignore[reportAttributeAccessIssue]
             lines.loc[line_to_move.name, sub_number] = sub_to_merge_to
 
             # Update geometry on the remaining line
