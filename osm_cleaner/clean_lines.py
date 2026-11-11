@@ -304,8 +304,23 @@ def _split_lines_into_systems(lines: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     len_wires = lines.wires.apply(len)
     len_ref = lines.ref.apply(len)
 
-    if any((len_voltage > 1) & (len_wires > 1) & (len_wires != len_voltage)):
-        raise ValueError("Voltage and wires length mismatch")
+    # Make sure amount of wires and voltages match
+    miss_matched = lines[(len_voltage > 1) & (len_wires > 1) & (len_wires != len_voltage)]
+    if not miss_matched.empty:
+
+        def expand_list(lst, target_length):
+            return lst[:1] * (target_length - len(lst) + 1) + lst[1:]
+
+        expanded_wires_voltage = miss_matched.apply(
+            lambda row: pd.Series(
+                {
+                    col: expand_list(row[col], max(len(row["voltage"]), len(row["wires"])))
+                    for col in ["voltage", "wires"]
+                }
+            ),
+            axis=1,
+        )
+        lines.loc[expanded_wires_voltage.index, ["wires", "voltage"]] = expanded_wires_voltage
 
     # Number of rows to split line into
     n = np.maximum(len_voltage, len_wires)
