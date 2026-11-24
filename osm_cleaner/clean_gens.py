@@ -99,7 +99,7 @@ def _get_output(tags: dict, threshold: float = 1e6) -> float | None:
     if "plant:output:electricity" not in tags:
         return None
 
-    gen = tags["plant:output:electricity"].lower()
+    gen = tags["plant:output:electricity"].lower().replace("~", "")
     gen = gen.replace(",", ".")
     gen = gen.split(" ")
 
@@ -120,7 +120,7 @@ def _get_output(tags: dict, threshold: float = 1e6) -> float | None:
 
     try:
         value = float(value)
-    except TypeError:
+    except (TypeError, ValueError):
         return None
 
     factor: float
