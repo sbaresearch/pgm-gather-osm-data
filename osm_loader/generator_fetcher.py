@@ -26,7 +26,12 @@ def get_raw_gens(date: str):
 
         headers = {"User-Agent": "pgm_get_powergrid_model"}
 
-        response = requests.post(overpass_url, data=query, headers=headers)
+        response = requests.post(
+            overpass_url,
+            data={"data": query},
+            headers=headers,
+            timeout=(10, 600),
+        )
         response.raise_for_status()  # Raise HTTPError for bad responses
         if len(response.json()["elements"]) == 0:
             raise TimeoutError("Could not find any data; probably query timed out")

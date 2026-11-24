@@ -27,7 +27,7 @@ def get_raw_lines(date: str):
         overpass_url,
         data={"data": query},
         headers=headers,
-        timeout=(100, 600),
+        timeout=(10, 600),
     )
     response.raise_for_status()  # Raise HTTPError for bad responses
     if len(response.json()["elements"]) == 0:
