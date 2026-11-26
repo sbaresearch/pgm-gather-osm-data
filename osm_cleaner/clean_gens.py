@@ -15,56 +15,11 @@ def clean_gens(date: str) -> gpd.GeoDataFrame:
     Returns:
         gdf (GeoDataframe): A GeoDataFrame with all relevant information for the generators.
     """
-    # Handle ways
-    vprint("\tProcessing way generators")
-
-    try:
-        with open(f"osm_data/generator_ways_{date}.json") as f:
-            way_data = json.load(f)
-    except FileNotFoundError:
-        answer = ""
-        while answer != "y":
-            answer = input(f"Could not find generator data for date {date}. Fetch new data? (y/n)").lower()
-            if answer == "n":
-                vprint("Not gathering required data. Aborting...")
-                from sys import exit
-
-                exit()
-
-        get_raw_gens(date)
-
-        with open(f"osm_data/generator_ways_{date}.json") as f:
-            way_data = json.load(f)
-
-    way_df = pd.DataFrame(way_data["elements"])
-
-    way_df["output_w"] = way_df.tags.apply(_get_output)
-    way_df = way_df.dropna().reset_index(drop=True)
-
-    way_df["polygon"] = way_df.geometry.apply(_get_polygon_ways)  # type: ignore
-
-    way_df.drop(columns=["geometry", "nodes"], inplace=True)
-
-    # Handle relations
-    vprint("\tProcessing relation generators")
-
-    with open(f"osm_data/generator_relations_{date}.json") as f:
-        rel_data = json.load(f)
-
-    rel_df = pd.DataFrame(rel_data["elements"])
-
-    rel_df["output_w"] = rel_df.tags.apply(_get_output)
-    rel_df = rel_df.dropna().reset_index(drop=True)
-
-    is_in_ways = rel_df.members.apply(lambda x: any(member["ref"] in way_df.id.values for member in x))
-    rel_df = rel_df[~is_in_ways].copy()
-
-    rel_df["polygon"] = rel_df.bounds.apply(_get_polygon_relations)  # type: ignore
-
-    rel_df.drop(columns=["members"], inplace=True)
+    way_gens = _get_way_generators(date)
+    rel_gens = _get_rel_generators(date, way_gens)
 
     # Merge and batch process
-    df = pd.concat([way_df, rel_df]).reset_index(drop=True)
+    df = pd.concat([way_gens, rel_gens]).reset_index(drop=True)
 
     df["point"] = df.polygon.apply(lambda x: x.centroid)
     df["lat"] = df.point.apply(lambda x: x.y)
@@ -80,6 +35,75 @@ def clean_gens(date: str) -> gpd.GeoDataFrame:
     gdf = gpd.GeoDataFrame(df, geometry="polygon", crs=crs)
 
     return gdf
+
+
+def _get_way_generators(date: str) -> pd.DataFrame:
+    vprint("\tProcessing way generators")
+
+    try:
+        with open(f"osm_data/generator_ways_{date}.json") as f:
+            way_data = json.load(f)
+    except FileNotFoundError:
+        answer = ""
+        while answer != "y":
+            answer = input(f"Could not find generator way data for date {date}. Fetch new data? (y/n)").lower()
+            if answer == "n":
+                vprint("Not gathering required data. Aborting...")
+                from sys import exit
+
+                exit()
+
+        get_raw_gens(date, type="ways")
+
+        with open(f"osm_data/generator_ways_{date}.json") as f:
+            way_data = json.load(f)
+
+    way_df = pd.DataFrame(way_data["elements"])
+
+    way_df["output_w"] = way_df.tags.apply(_get_output)
+    way_df = way_df.dropna().reset_index(drop=True)
+
+    way_df["polygon"] = way_df.geometry.apply(_get_polygon_ways)  # type: ignore
+
+    way_df.drop(columns=["geometry", "nodes"], inplace=True)
+
+    return way_df
+
+
+def _get_rel_generators(date: str, way_df: pd.DataFrame) -> pd.DataFrame:
+    vprint("\tProcessing relation generators")
+
+    try:
+        with open(f"osm_data/generator_relations_{date}.json") as f:
+            rel_data = json.load(f)
+    except FileNotFoundError:
+        answer = ""
+        while answer != "y":
+            answer = input(f"Could not find generator relations data for date {date}. Fetch new data? (y/n)").lower()
+            if answer == "n":
+                vprint("Not gathering required data. Aborting...")
+                from sys import exit
+
+                exit()
+
+        get_raw_gens(date, type="relations")
+
+        with open(f"osm_data/generator_relations_{date}.json") as f:
+            rel_data = json.load(f)
+
+    rel_df = pd.DataFrame(rel_data["elements"])
+
+    rel_df["output_w"] = rel_df.tags.apply(_get_output)
+    rel_df = rel_df.dropna().reset_index(drop=True)
+
+    is_in_ways = rel_df.members.apply(lambda x: any(member["ref"] in way_df.id.values for member in x))
+    rel_df = rel_df[~is_in_ways].copy()
+
+    rel_df["polygon"] = rel_df.bounds.apply(_get_polygon_relations)  # type: ignore
+
+    rel_df.drop(columns=["members"], inplace=True)
+
+    return rel_df  # pyright: ignore[reportReturnType]
 
 
 def _get_output(tags: dict, threshold: float = 1e6) -> float | None:

@@ -10,6 +10,10 @@ crs = "EPSG:4326"  # lat lon (what OSM uses)
 distance_crs = "EPSG:31287"  # Austria only
 tabbed_tqdm_format = "        {l_bar}{bar}{r_bar}"
 
+from typing import Literal
+
+DataType = Literal["ways", "relations"]
+
 
 def export_gdf(gdf: gpd.GeoDataFrame, file_path: str):
     gdf.to_file(file_path)

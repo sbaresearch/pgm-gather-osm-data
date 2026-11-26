@@ -3,13 +3,15 @@ import os
 
 import requests
 
-from util.utils import confirm_data_fetch
+from util.utils import DataType, confirm_data_fetch
 
 
-def get_raw_gens(date: str):
+def get_raw_gens(date: str, type: DataType | None = None):
     overpass_url = "https://overpass-api.de/api/interpreter"
 
     features = {"generator_ways": 'way["power"="plant"]', "generator_relations": 'rel["power"="plant"]'}
+    if type is not None:
+        features = {key: value for key, value in features.items() if type in key}
 
     for name, filter in features.items():
         if not confirm_data_fetch(f"osm_data/{name}_{date}.json", name):

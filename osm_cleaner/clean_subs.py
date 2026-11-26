@@ -40,7 +40,7 @@ def _get_way_subs(date: str) -> pd.DataFrame:
 
                 exit()
 
-        get_raw_subs(date)
+        get_raw_subs(date, type="ways")
 
         with open(f"osm_data/substation_ways_{date}.json") as f:
             data = json.load(f)
@@ -59,7 +59,23 @@ def _get_way_subs(date: str) -> pd.DataFrame:
 
 
 def _get_rel_subs(date: str) -> pd.DataFrame:
-    with open(f"osm_data/substation_relations_{date}.json") as f:
+    try:
+        with open(f"osm_data/substation_relations_{date}.json") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        answer = ""
+        while answer != "y":
+            answer = input(f"Could not find substation realtions data for date {date}. Fetch new data? (y/n)").lower()
+            if answer == "n":
+                vprint("Not gathering required data. Aborting...")
+                from sys import exit
+
+                exit()
+
+        get_raw_subs(date, type="relations")
+
+        with open(f"osm_data/substation_relations_{date}.json") as f:
+            data = json.load(f)
         data = json.load(f)
 
     df = pd.DataFrame(data["elements"])
