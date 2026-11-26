@@ -33,8 +33,8 @@ def get_raw_gens(date: str):
             timeout=(10, 600),
         )
         response.raise_for_status()  # Raise HTTPError for bad responses
-        if len(response.json()["elements"]) == 0:
-            raise TimeoutError("Could not find any data; probably query timed out")
+        if "remark" in response.json():
+            raise MemoryError("Propblem gathering data from OSM, probably ran out of memory. Try again later.")
 
         filepath = f"osm_data/{name}_{date}.json"
         parentfolder = os.path.dirname(filepath)
