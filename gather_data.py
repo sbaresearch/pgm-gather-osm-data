@@ -37,7 +37,8 @@ def gather_data(date: str):
     sub_gdf["voltage"] = sub_gdf["voltage"].apply(json.dumps)
     sub_gdf.to_file(f"{config.RESULTS_DIR}/substations.gpkg", driver="GPKG")
 
-    gens_gdf.to_file(f"{config.RESULTS_DIR}/generators.gpkg", driver="GPKG")
+    if not gens_gdf.empty:
+        gens_gdf.to_file(f"{config.RESULTS_DIR}/generators.gpkg", driver="GPKG")
 
     if config.VISUALIZATION:
         from visualization import add_visualization
@@ -47,4 +48,5 @@ def gather_data(date: str):
 
         line_gdf.to_file(f"{config.RESULTS_DIR}/visualisation/lines.geojson", driver="GeoJSON")
         sub_gdf.to_file(f"{config.RESULTS_DIR}/visualisation/substations.geojson", driver="GeoJSON")
-        gens_gdf.to_file(f"{config.RESULTS_DIR}/visualisation/generators.geojson", driver="GeoJSON")
+        if not gens_gdf.empty:
+            gens_gdf.to_file(f"{config.RESULTS_DIR}/visualisation/generators.geojson", driver="GeoJSON")

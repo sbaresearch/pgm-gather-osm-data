@@ -92,6 +92,8 @@ def _get_rel_generators(date: str, way_df: pd.DataFrame) -> pd.DataFrame:
             rel_data = json.load(f)
 
     rel_df = pd.DataFrame(rel_data["elements"])
+    if rel_df.empty:
+        return rel_df
 
     rel_df["output_w"] = rel_df.tags.apply(_get_output)
     rel_df = rel_df.dropna().reset_index(drop=True)

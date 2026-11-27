@@ -496,6 +496,9 @@ def _split_lines_over_subs(
                 new_line["id"] = f"{line.id}_{i}"
             new_lines.extend(split_lines)
 
+    if len(lines_to_remove) == 0:
+        return lines.to_crs(crs)
+
     lines.drop(index=lines_to_remove, inplace=True)
 
     new_line = gpd.GeoDataFrame(new_lines, crs=distance_crs)

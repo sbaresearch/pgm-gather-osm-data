@@ -80,6 +80,9 @@ def _get_rel_subs(date: str) -> pd.DataFrame:
 
     df = pd.DataFrame(data["elements"])
 
+    if df.empty:
+        return df
+
     df = _basic_process(df)
 
     df["polygon"] = df.members.apply(_get_relation_polygon)  # type: ignore
